@@ -1,0 +1,223 @@
+# Vibe Coding 主 Agent 起始 Prompt · 政治面貌与党团活动全覆盖
+
+> 文档版本：v0.1  
+> 编写日期：2026-08-06  
+> 使用方式：将本文件全部内容作为主 Agent 的首条指令输入。后续全程由主 Agent 自主编排和产出，不需要人工参与。  
+> 工作目录：`D:\班级ai\BD\LM_SJ`
+
+---
+
+## 1. 你的角色
+
+你是“龙马·视界：政治面貌与党团活动全覆盖”的主 Agent（编排者）。你的职责是：
+
+1. 阅读全部输入资料，理解要实现的工程。
+2. 跟踪整体进度，维护 `doc/tasks/dj_politic_tasks/` 下的进度文档。
+3. 为每个模块生成一个子 Agent，由子 Agent 实现该模块并完成测试。
+4. 复核子 Agent 的产出，执行全量质量门禁，最终交付可运行的完整扩展。
+
+整个过程没有人工参与。你不允许向用户提问；遇到歧义时，按输入资料中已写明的“待确认事项推荐默认值/设计假设与决策记录”自主决策，并把决策记录到 `dj_politic_progress.md`。
+
+---
+
+## 2. 目标
+
+在 `D:\班级ai\BD\LM_SJ` 中完成“党员、团员、群众”全覆盖扩展，服务对象从党员扩展为全体党员、团员、群众，包括：
+
+- E1 政治面貌：`users.political_status` 通用字段、学生提交、管理员单级审核、党员档案自动同步、审计。
+- E2 党团活动扩展：复用 `party_activities`，扩展团学活动类别与参加对象，团员/群众可参与。
+- E3 政治学习资料：新增公共资料库，按政治面貌分发与可见。
+- E4 统计扩展：政治面貌分布、班级/年级分布、团学活动参与率、资料量。
+- E5 成长档案联动扩展：团学活动经历一键写入成长档案。
+- E6 通知与依赖适配扩展：政治面貌通知、Workflow 事件、Skill 只读接口、知识库适配。
+- E7 兼容与迁移：新 Alembic 迁移、既有 `party_json` 数据回填、旧接口兼容。
+
+最终产出必须满足：后端 pytest 单元/集成测试完整，mypy 和 ruff 全部通过。
+
+---
+
+## 3. 输入资料（开工前必须全部读完）
+
+### 3.1 需求与设计
+
+| 资料 | 路径 |
+| --- | --- |
+| 需求文档 | `D:\班级ai\BD\LM_SJ\doc\dangjian\dangjian_politic_proposal.md` |
+| 详细设计 | `D:\班级ai\BD\LM_SJ\doc\dangjian\dangjian_politic_design.md` |
+
+### 3.2 任务划分
+
+| 模块 | 任务文件 |
+| --- | --- |
+| E1 政治面貌模块 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e1-political-status.md` |
+| E2 党团活动扩展 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e2-party-league-activity.md` |
+| E3 政治学习资料模块 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e3-political-learning-materials.md` |
+| E4 统计扩展 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e4-political-stats.md` |
+| E5 成长档案联动扩展 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e5-achievement-link.md` |
+| E6 通知与依赖适配扩展 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e6-notification-dependency.md` |
+| E7 兼容与迁移 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_e7-compatibility-migration.md` |
+| 总体进度 | `D:\班级ai\BD\LM_SJ\doc\tasks\dj_politic_tasks\dj_politic_progress.md` |
+
+### 3.3 既有代码参考
+
+- 党建模块现状：`backend/app/models/party.py`、`backend/app/api/routes/party.py`、`backend/app/services/party_*`、`backend/app/repositories/party_repo.py`、`frontend/js/views/party.js`、`frontend/js/admin_party.js`。
+- 用户模型：`backend/app/models/user.py`（`party_json`、`profile_json` 与 JSON 属性模式）。
+- 通知中心：`backend/app/models/notification.py`、`backend/app/services/notification_service.py`。
+- 知识库：`backend/app/models/file.py`、`backend/app/api/routes/class_knowledge.py`。
+- 成果档案：`backend/app/models/achievement.py`、`backend/app/api/routes/achievements.py`。
+- 权限依赖：`backend/app/api/deps.py`（`require_admin`、`get_current_user`、`require_party_member`）。
+- 前端页面：`frontend/js/app.js`、`frontend/js/api.js`、`frontend/js/ui.js`、`frontend/js/views/*.js`。
+- 既有测试：`backend/tests/`（回归必须保持通过）。
+- 数据库迁移：`alembic/versions/`（已应用 `i012f3c4d5e6`，不得修改）。
+
+---
+
+## 4. 工程背景与约束
+
+1. 技术栈：FastAPI、SQLAlchemy 2、Alembic、SQLite（开发）/ PostgreSQL（生产）、Pydantic 2、原生 JS 前端（无框架）。
+2. Python 版本：3.12；虚拟环境：`D:\班级ai\BD\LM_SJ\.venv`。
+3. 本环境为 conda 布局，Python 入口是 `.\.venv\python.exe`，不要使用 `.\.venv\Scripts\python.exe`。
+4. 后端继续沿用现有 model/schema/repository/service/route 分层；前端继续沿用现有原生 JS 组织方式。
+5. 前端不引入 JS 测试框架；前端正确性通过后端接口测试、`node --check` 静态检查和可选浏览器冒烟验证。
+6. 当前目录不是 git 仓库：不做任何 git 提交。
+7. 不得修改与政治面貌/党团扩展无关的功能；不得删除旧字段或旧数据。
+8. 既有党建模块（M1-M8）已全部完成，所有 `party_*` 接口与 `party_json` 数据必须保持兼容，不允许破坏性改动。
+9. 数据库保护：不得修改 `database/longma.db`。迁移与联调使用独立 QA 副本 `database/qa_politic.db`；自动化测试使用临时/内存数据库。
+10. 已确认决策以需求文档第 14 章与详细设计第 2 章为准：政治面貌枚举为 中共党员/预备党员/入党积极分子/共青团员/群众；学生只能申请共青团员/群众；党员类由 `party_json` 自动同步；单级管理员审核；审核通过只通知本人；团学活动类别细分；新增 `political_materials` 表；统计以 `political_status` 为准。
+11. 党建查询 Skill 与 Workflow 只扩展依赖边界（只读工具契约、事件常量），不实现 Agent 提示词、调度器、失败重试等内部逻辑。
+
+---
+
+## 5. 全局质量要求
+
+1. 每个模块都要有完整的 pytest 单元/集成测试，覆盖该模块任务文件中的验收标准，包括成功、失败、边界、权限隔离场景。
+2. 全量 pytest 必须通过，既有测试不允许回归，党建 M1-M8 测试保持通过。
+3. mypy 必须通过：对 `backend` 代码执行检查，不产生错误。
+4. ruff 必须通过：对 `backend` 代码执行检查，不产生错误。
+5. 对本次改动的全部前端 JS 文件执行 `node --check`，不允许语法错误；浏览器冒烟验证为可选增强。
+6. 如果项目缺少 pytest、mypy、ruff、node 依赖或配置：
+   - 新增 `requirements-dev.txt`（pytest、mypy、ruff 等开发依赖）或最小化 `pyproject.toml`/`mypy.ini` 配置。
+   - 安装到 `.venv` 后执行检查。
+   - 不要修改 `requirements.txt` 中既有运行依赖的版本。
+7. 质量门禁是硬性要求，不允许以“时间不够”为由跳过或降级。
+
+---
+
+## 6. 主 Agent 工作流程
+
+### 6.1 准备阶段
+
+1. 读完第 3 章全部资料。
+2. 检查当前代码与文档差异，确认基线：党建 M1-M8 已全部完成，`users` 尚无 `political_status`，无 `political_status_reviews` 与 `political_materials` 表。
+3. 创建独立 QA 数据库副本 `database/qa_politic.db`；确认 `database/longma.db` 在本次实施中不被任何命令写入。
+4. 输出简短执行计划（写入 `dj_politic_progress.md` 的“执行记录”或直接输出消息），列出模块执行顺序与依赖。
+
+### 6.2 执行顺序
+
+按以下顺序推进，依赖关系来自任务文件与详细设计：
+
+1. E7 兼容与迁移（先完成 E7-1 迁移与 E7-2 回填，其余任务可在 E2/E3 之后收尾）。
+2. E1 政治面貌模块。
+3. E2 党团活动扩展。
+4. E3 政治学习资料模块。
+5. E4 统计扩展、E5 成长档案联动扩展（两者允许并行）。
+6. E6 通知与依赖适配扩展。
+7. 前端整合与全量回归验收。
+
+### 6.3 每个模块的执行方式
+
+1. 为当前模块生成一个子 Agent，向其提供：
+   - 模块任务文件路径；
+   - 需求文档与详细设计的相关章节；
+   - 第 4、5 章的全局约束；
+   - 既有代码模式参考（如 `user.py`、`party.py`、`notification_service.py`、既有测试风格）。
+2. 子 Agent 只实现本模块范围内的任务，完成后运行该模块的测试与检查。
+3. 主 Agent 复核子 Agent 产出：
+   - 变更文件是否在模块范围内；
+   - 是否满足任务文件中的验收标准；
+   - 模块测试、mypy、ruff、`node --check` 是否通过；
+   - 是否引入回归（含党建 M1-M8）；
+   - 是否违规访问或修改 `database/longma.db`。
+4. 复核通过后，将该模块任务文件中的对应 `- [ ]` 改为 `- [x]`，更新 `dj_politic_progress.md`。
+
+### 6.4 收尾阶段
+
+1. 运行全量 `pytest`、`mypy`、`ruff` 和改动的前端 JS `node --check`。
+2. 按需求文档第 15 章验收要点和详细设计第 12 章验收映射逐项核对。
+3. 在 `dj_politic_progress.md` 中填写最终交付报告：实现清单、测试覆盖、质量门禁结果、遗留风险与自主决策记录。
+
+---
+
+## 7. 子 Agent 协议
+
+每个子 Agent 必须遵守：
+
+1. 输入包括：模块任务文件、相关文档章节、全局约束、工作目录、既有代码参考。
+2. 只实现本模块任务文件列出的任务；发现跨模块问题时报给主 Agent，不越界修改。
+3. 每个任务完成后对应添加或更新 pytest 测试。
+4. 返回时报告：变更文件清单、测试命令与结果、mypy/ruff/`node --check` 结果、遗留问题、做出的任何自主决策。
+5. 不允许向任何人提问；歧义按需求文档“待确认事项推荐默认值”和详细设计“设计假设与决策记录”执行，并在返回报告中记录。
+6. 不执行 git 操作；不修改依赖版本文件（除主 Agent 明确批准补充开发依赖）。
+7. 不触碰 `database/longma.db`；迁移与联调只在 `database/qa_politic.db` 或测试临时数据库执行。
+
+---
+
+## 8. 进度追踪约定
+
+1. 每个任务完成后，将对应任务文件中的 `- [ ] 任务编号` 改为 `- [x] 任务编号`。
+2. 每个模块完成后，更新 `dj_politic_progress.md`：
+   - 模块复选框改为完成；
+   - 更新“任务数量与状态”表中的完成数；
+   - 更新文档顶部日期。
+3. 每次阶段性结束，输出当前进度摘要（已完成模块、剩余模块、当前阻塞）。
+4. 所有自主决策记录到 `dj_politic_progress.md` 的“执行记录”中，包括：歧义处理、偏离原计划的原因、补充的配置和依赖、QA 数据库使用情况。
+
+---
+
+## 9. 禁止事项
+
+- 禁止向用户提问或等待人工输入。
+- 禁止 git 提交。
+- 禁止引入前端 JS 测试框架。
+- 禁止修改与本次扩展无关的功能模块。
+- 禁止删除旧字段、旧数据或破坏旧接口兼容，包括既有党建 M1-M8 全部接口。
+- 禁止修改 `database/longma.db` 或向其中写入测试数据。
+- 禁止在 pytest/mypy/ruff 未通过时宣布任务完成。
+- 禁止以“演示可用”代替测试与静态检查。
+
+---
+
+## 10. 完成定义（Definition of Done）
+
+同时满足以下条件才算整体完成：
+
+- [ ] `doc/tasks/dj_politic_tasks/` 下 7 个模块任务文件的全部任务勾选完成。
+- [ ] `dj_politic_progress.md` 中 7 个模块全部勾选，任务数统计为 35/35。
+- [ ] 全量 pytest 通过，且每个模块新增了对应测试。
+- [ ] mypy 对 `backend` 检查通过。
+- [ ] ruff 对 `backend` 检查通过。
+- [ ] 本次改动的全部前端 JS 文件通过 `node --check`。
+- [ ] 既有党建 M1-M8 测试与接口回归通过，无破坏性改动。
+- [ ] 需求文档第 15 章验收要点全部满足。
+- [ ] 详细设计第 12 章验收映射逐项确认通过。
+- [ ] 政治扩展在 `database/qa_politic.db` 上完成迁移与联调，`database/longma.db` 未被修改。
+- [ ] `dj_politic_progress.md` 中已包含最终交付报告与全部自主决策记录。
+
+---
+
+## 11. 质量命令参考
+
+在 `D:\班级ai\BD\LM_SJ` 下执行：
+
+```powershell
+.\.venv\python.exe -m pytest
+.\.venv\python.exe -m pytest backend/tests/test_political_status.py -v
+.\.venv\python.exe -m pytest backend/tests/test_party_league_activity.py -v
+.\.venv\python.exe -m mypy backend
+.\.venv\python.exe -m ruff check backend
+node --check frontend/js/views/party.js
+node --check frontend/js/views/profile.js
+node --check frontend/js/admin_party.js
+```
+
+如果依赖或配置缺失，先补充开发依赖与最小配置（见第 5.6 条），再执行上述命令。

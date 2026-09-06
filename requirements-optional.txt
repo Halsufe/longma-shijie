@@ -1,0 +1,6 @@
+# 可选依赖：向量检索（P4 暂缓，后续启用时再装）
+# 安装方式：pip install -r requirements-optional.txt
+# 说明：sentence-transformers 会拉起 torch，体积很大（~2GB），下载耗时长，
+#       且当前 P4 检索使用中文 bigram 关键词匹配，未调用向量检索路径。
+
+sentence-transformers==3.0.1

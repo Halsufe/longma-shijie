@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">龙马视界标志</title>
+  <rect width="64" height="64" rx="14" fill="#167a57"/>
+  <path d="M15 20c7-4 14-4 21 1 4 3 8 4 13 3v21c-5 1-10 0-15-3-6-4-12-4-19-1V20Z" fill="#f8faf9"/>
+  <path d="M32 23v20" stroke="#167a57" stroke-width="3" stroke-linecap="round"/>
+  <path d="M20 31c4-2 8-2 12 1M44 31c-4-2-8-2-12 1" fill="none" stroke="#d8a83e" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="32" cy="16" r="4" fill="#d8a83e"/>
+</svg>

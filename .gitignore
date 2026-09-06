@@ -1,0 +1,52 @@
+# Python 虚拟环境
+.venv/
+venv/
+env/
+
+# 字节码
+__pycache__/
+*.py[cod]
+*.pyo
+
+# 数据库
+database/*.db
+database/*.db-journal
+backend/storage/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# 环境变量
+.env
+.env.local
+.env.*
+!.env.example
+
+# 本地运行日志和测试数据库
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.db.backup*
+backend/storage_qa/
+*.err
+*.out
+server-*.log
+server-*.err
+browser-qa.*
+codex-*.log
+codex-*.err.log
+diag-*.txt
+login-refresh-server.*
+mentor-selection-qa.*
+ssl-test-*.txt
+test_agent_report.json
+test_data/

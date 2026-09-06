@@ -1,0 +1,44 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure API URL
+        env:
+          API_BASE_URL: ${{ vars.LONGMA_API_BASE_URL }}
+        run: |
+          test -n "$API_BASE_URL"
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          path = Path("frontend/index.html")
+          text = path.read_text(encoding="utf-8")
+          value = os.environ["API_BASE_URL"].rstrip("/").replace('\\', '\\\\').replace('"', '\\"')
+          text = text.replace('window.__LONGMA_API_BASE_URL__ = "";', f'window.__LONGMA_API_BASE_URL__ = "{value}";')
+          path.write_text(text, encoding="utf-8")
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend
+      - id: deployment
+        uses: actions/deploy-pages@v4

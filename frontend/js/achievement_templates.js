@@ -1,0 +1,237 @@
+const YES_NO_OPTIONS = Object.freeze(["是", "否"]);
+const STANDARD_LEVEL_OPTIONS = Object.freeze(["国家级", "省级", "校级", "院级"]);
+const ARTS_LEVEL_OPTIONS = Object.freeze(["校级", "省级", "国家级"]);
+
+export const FIELD_FORMATS = Object.freeze({
+  year: "year:1900-current",
+  month: "month:1-12",
+  year_or_ongoing: "year:1900-current|进行中",
+  month_or_ongoing: "month:1-12|进行中",
+  year_or_none: "year:1900-current|无",
+  month_or_none: "month:1-12|无",
+  name_list: "name-list:comma-separated-no-empty-items",
+});
+
+function field(key, label, type = "text", options = {}) {
+  return Object.freeze({
+    key,
+    label,
+    type,
+    required: true,
+    enum: Object.freeze([...(options.enum || [])]),
+    format: options.format || null,
+    hint: options.hint || "",
+  });
+}
+
+function levelField(label, enumValues = STANDARD_LEVEL_OPTIONS) {
+  return field("level", label, "select", { enum: enumValues, hint: "请选择级别" });
+}
+
+function template(config) {
+  return Object.freeze({
+    ...config,
+    fields: Object.freeze(config.fields),
+  });
+}
+
+export const ACHIEVEMENT_TEMPLATES = Object.freeze({
+  paper: template({
+    category: "paper",
+    category_label: "学术论文",
+    title_copy: "以下是您的学术论文，您可以修改和新增。所有条目必填",
+    title_field: field("title", "标题", "text", { hint: "论文题目" }),
+    fields: [
+      field("authors", "作者", "text", { format: FIELD_FORMATS.name_list, hint: "全部作者中文名，逗号分隔；通讯作者标注“（通讯）”" }),
+      field("journal", "期刊", "text", { hint: "期刊全称；期刊名首词为 the 时省略该词" }),
+      field("sci_indexed", "SCI检索", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("ssci_indexed", "SSCI检索", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("cssci_indexed", "CSSCI检索", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("is_top_journal", "是否顶刊", "bool", { enum: YES_NO_OPTIONS, hint: "AUTD24、FT50、ABS4及以上、Nature、Science、Cell系列可认定为顶刊" }),
+      field("paper_type", "论文类型", "select", { enum: ["期刊论文", "会议论文", "工作论文", "其他"], hint: "请选择论文类型" }),
+      field("pub_year", "发表年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字，如2026" }),
+      field("pub_month", "发表月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("wos_url", "WoS链接", "url", { format: "url", hint: "合法URL，如https://..." }),
+      field("volume", "卷号", "text", { hint: "允许包含字母" }),
+      field("issue", "期号"),
+      field("citation_count", "引用次数", "number", { format: "non-negative-integer", hint: "非负整数" }),
+      field("research_direction", "研究方向"),
+      field("pages", "页码", "text", { format: "page-range|forthcoming", hint: "如20-30；没有页码填forthcoming" }),
+      field("keywords", "关键词", "text", { format: "text-list:comma-separated-no-empty-items", hint: "逗号分隔" }),
+      field("doi", "DOI", "text", { hint: "如10.xxxx/xxxx" }),
+      field("abstract", "摘要", "textarea"),
+    ],
+    level_usage: false,
+    level_field: null,
+    year_source: "pub_year",
+    year_fallback_source: null,
+    month_source: "pub_month",
+    month_fallback_source: null,
+  }),
+  award: template({
+    category: "award",
+    category_label: "竞赛获奖",
+    title_copy: "以下是您的竞赛获奖记录，您可以修改和新增。所有条目必填",
+    title_field: field("title", "竞赛名称", "text", { hint: "完整的竞赛名称" }),
+    fields: [
+      field("award_grade", "获奖等级", "text", { hint: "未获奖填“无”" }),
+      field("organizer", "主办单位", "text", { hint: "主办单位全称" }),
+      field("award_year", "获奖年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字，如2026" }),
+      field("award_month", "获奖月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("teacher_names", "指导教师", "text", { format: FIELD_FORMATS.name_list, hint: "多人姓名以逗号分隔" }),
+      field("is_team", "是否团队", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("is_leader", "是否责任人", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("member_names", "成员名单", "text", { format: FIELD_FORMATS.name_list, hint: "逗号分隔；非团队时填本人姓名" }),
+      field("description", "描述", "textarea"),
+    ],
+    level_usage: true,
+    level_field: levelField("赛事级别"),
+    year_source: "award_year",
+    year_fallback_source: null,
+    month_source: "award_month",
+    month_fallback_source: null,
+  }),
+  research: template({
+    category: "research",
+    category_label: "项目课题",
+    title_copy: "以下是您的项目课题记录，您可以修改和新增。所有条目必填",
+    title_field: field("title", "项目名称", "text", { hint: "完整的项目名称" }),
+    fields: [
+      field("project_unit", "项目所属单位"),
+      field("project_field", "项目领域"),
+      field("project_funding", "项目经费", "text", { format: "decimal-2|无", hint: "数字保留两位小数；无经费填“无”" }),
+      field("leader_name", "主持人", "text", { hint: "姓名" }),
+      field("participant_names", "参与人", "text", { format: FIELD_FORMATS.name_list, hint: "多人姓名以逗号分隔" }),
+      field("project_year", "立项年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_year", "开始年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_month", "开始月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("end_year", "结束年份", "text", { format: FIELD_FORMATS.year_or_ongoing, hint: "4位数字；进行中填“进行中”" }),
+      field("end_month", "结束月份", "text", { format: FIELD_FORMATS.month_or_ongoing, hint: "1-12；进行中填“进行中”" }),
+      field("approval_no", "批准文号"),
+    ],
+    level_usage: true,
+    level_field: levelField("项目级别"),
+    year_source: "project_year",
+    year_fallback_source: null,
+    month_source: "start_month",
+    month_fallback_source: null,
+  }),
+  patent: template({
+    category: "patent",
+    category_label: "软著专利",
+    title_copy: "以下是您的专利/软著记录，您可以修改和新增。所有条目必填",
+    title_field: field("title", "专利/软著名", "text", { hint: "完整的专利或软著名称" }),
+    fields: [
+      field("patent_type", "类型", "select", { enum: ["发明专利", "软件著作权", "实用新型", "外观设计"], hint: "请选择类型" }),
+      field("participant_names", "参与人", "text", { format: FIELD_FORMATS.name_list, hint: "多人姓名以逗号分隔" }),
+      field("field", "所属领域"),
+      field("apply_year", "申请年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("apply_month", "申请月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("grant_year", "授权年份", "text", { format: FIELD_FORMATS.year_or_none, hint: "4位数字；未授权填“无”" }),
+      field("grant_month", "授权月份", "text", { format: FIELD_FORMATS.month_or_none, hint: "1-12；未授权填“无”" }),
+      field("application_no", "申请号"),
+      field("grant_no", "授权号", "text", { hint: "未授权填“无”" }),
+      field("abstract", "摘要", "textarea"),
+    ],
+    level_usage: false,
+    level_field: null,
+    year_source: "grant_year",
+    year_fallback_source: "apply_year",
+    month_source: "grant_month",
+    month_fallback_source: "apply_month",
+  }),
+  innovation: template({
+    category: "innovation",
+    category_label: "创新创业",
+    title_copy: "以下是您的创新创业项目列表，您可以查看、修改或新增。所有条目必填",
+    title_field: field("title", "项目名称", "text", { hint: "完整的项目名称" }),
+    fields: [
+      field("project_category", "项目类别", "select", { enum: ["创新项目", "创业项目"], hint: "请选择项目类别" }),
+      field("leader_name", "主持人", "text", { hint: "姓名" }),
+      field("member_names", "团队成员", "text", { format: FIELD_FORMATS.name_list, hint: "多人姓名以逗号分隔" }),
+      field("teacher_names", "指导教师", "text", { format: FIELD_FORMATS.name_list, hint: "多人姓名以逗号分隔" }),
+      field("start_year", "开始年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_month", "开始月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("end_year", "结束年份", "text", { format: FIELD_FORMATS.year_or_ongoing, hint: "4位数字；进行中填“进行中”" }),
+      field("end_month", "结束月份", "text", { format: FIELD_FORMATS.month_or_ongoing, hint: "1-12；进行中填“进行中”" }),
+      field("summary", "项目简介", "textarea"),
+    ],
+    level_usage: true,
+    level_field: levelField("结项级别"),
+    year_source: "start_year",
+    year_fallback_source: null,
+    month_source: "start_month",
+    month_fallback_source: null,
+  }),
+  organization: template({
+    category: "organization",
+    category_label: "组织管理",
+    title_copy: "以下是您的组织或部门任职经历信息，您可以修改和新增。所有条目必填",
+    title_field: field("title", "任职部门", "text", { hint: "所在部门或机构" }),
+    fields: [
+      field("position", "职务", "text", { hint: "填写所任职务，如部长、会长" }),
+      field("assessment", "考核评定", "select", { enum: ["优秀", "良好", "合格"], hint: "请选择组织考核结果" }),
+      field("honor_title", "荣誉称号", "text", { hint: "未获得填“无”" }),
+      field("start_year", "开始年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_month", "开始月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("end_year", "结束年份", "text", { format: FIELD_FORMATS.year_or_ongoing, hint: "4位数字；在任期间填“进行中”" }),
+      field("end_month", "结束月份", "text", { format: FIELD_FORMATS.month_or_ongoing, hint: "1-12；在任期间填“进行中”" }),
+    ],
+    level_usage: false,
+    level_field: null,
+    year_source: "start_year",
+    year_fallback_source: null,
+    month_source: "start_month",
+    month_fallback_source: null,
+  }),
+  social: template({
+    category: "social",
+    category_label: "社会实践",
+    title_copy: "以下是您的社会实践信息，您可以修改和新增。所有条目必填",
+    title_field: field("title", "活动名称"),
+    fields: [
+      field("practice_unit", "实践单位"),
+      field("is_team", "是否团队", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("member_names", "成员", "text", { format: FIELD_FORMATS.name_list, hint: "逗号分隔，负责人标星" }),
+      field("is_leader", "是否负责人", "bool", { enum: YES_NO_OPTIONS, hint: "请选择是或否" }),
+      field("start_year", "开始年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_month", "开始月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("end_year", "结束年份", "text", { format: FIELD_FORMATS.year_or_ongoing, hint: "4位数字；持续活动填“进行中”" }),
+      field("end_month", "结束月份", "text", { format: FIELD_FORMATS.month_or_ongoing, hint: "1-12；持续活动填“进行中”" }),
+      field("process_description", "实践过程概述", "textarea"),
+    ],
+    level_usage: false,
+    level_field: null,
+    year_source: "start_year",
+    year_fallback_source: null,
+    month_source: "start_month",
+    month_fallback_source: null,
+  }),
+  arts: template({
+    category: "arts",
+    category_label: "文体活动",
+    title_copy: "以下是您的文体活动信息，您可以修改和新增。所有条目必填",
+    title_field: field("title", "活动名称"),
+    fields: [
+      field("organizer", "主办单位"),
+      field("start_year", "开始年份", "number", { format: FIELD_FORMATS.year, hint: "4位数字" }),
+      field("start_month", "开始月份", "number", { format: FIELD_FORMATS.month, hint: "1-12" }),
+      field("end_year", "结束年份", "text", { format: FIELD_FORMATS.year_or_ongoing, hint: "4位数字；持续活动填“进行中”" }),
+      field("end_month", "结束月份", "text", { format: FIELD_FORMATS.month_or_ongoing, hint: "1-12；持续活动填“进行中”" }),
+      field("summary", "活动概述", "textarea"),
+    ],
+    level_usage: true,
+    level_field: levelField("活动级别", ARTS_LEVEL_OPTIONS),
+    year_source: "start_year",
+    year_fallback_source: null,
+    month_source: "start_month",
+    month_fallback_source: null,
+  }),
+});
+
+export const ACHIEVEMENT_CATEGORIES = Object.freeze(Object.keys(ACHIEVEMENT_TEMPLATES));
+export const achievementTemplates = ACHIEVEMENT_TEMPLATES;
+
+export function getAchievementTemplate(category) {
+  return ACHIEVEMENT_TEMPLATES[category] || null;
+}

@@ -1,0 +1,58 @@
+# 龙马·视界 部署编排
+# 注意：本配置为产物，未在本环境运行时验证。
+# 启动：docker compose --env-file .env up -d
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-longma}
+      POSTGRES_USER: ${POSTGRES_USER:-longma}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-longma}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENV: prod
+      SECRET_KEY: ${SECRET_KEY}
+      DB_URL: postgresql+psycopg2://${POSTGRES_USER:-longma}:${POSTGRES_PASSWORD:-change-me}@db:5432/${POSTGRES_DB:-longma}
+      STORAGE_PATH: /app/backend/storage
+      AI_API_KEY: ${AI_API_KEY}
+      AI_BASE_URL: ${AI_BASE_URL}
+      AI_MODEL: ${AI_MODEL}
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      MCP_SERVICE_TOKEN: ${MCP_SERVICE_TOKEN}
+      CLASS_NAME: ${CLASS_NAME:-大数据管理与应用25级}
+    volumes:
+      - appstorage:/app/backend/storage
+    expose:
+      - "8000"
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+volumes:
+  pgdata:
+  appstorage:
