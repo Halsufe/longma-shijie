@@ -1,6 +1,6 @@
 # 初学者部署指南
 
-本项目采用三部分：GitHub Pages 托管前端，Render 运行 FastAPI 后端，Supabase 提供 PostgreSQL 数据库和文件存储。GitHub Pages 本身不能运行 Python，所以不能只把整个项目拖到 Pages 上。
+本项目采用三部分：GitHub Pages 托管前端，Hugging Face Spaces 运行 FastAPI 后端，Supabase 提供 PostgreSQL 数据库和文件存储。GitHub Pages 本身不能运行 Python。
 
 ## 1. 创建 Supabase
 
@@ -27,23 +27,27 @@ git push -u origin main
 
 不要提交 `.env`、数据库文件或任何 API key；项目的 `.gitignore` 已经忽略这些内容。
 
-## 3. 部署后端到 Render
+## 3. 部署后端到 Hugging Face Spaces（无需银行卡）
 
-1. 打开 <https://render.com>，用 GitHub 登录，点击 **New → Blueprint**。
-2. 选择刚才的仓库。Render 会读取 `render.yaml` 创建 `longma-api`。
-3. 在服务的 **Environment** 填写：
+1. 打开 <https://huggingface.co/new-space>，创建 Docker Space，名称填写 `longma-shijie-api`。
+2. 在 Space Settings -> Repository secrets 添加：
    - `DB_URL`：Supabase Database URI
-   - `CORS_ORIGINS`：先填 GitHub Pages 地址，例如 `https://<用户名>.github.io`
+   - `CORS_ORIGINS`：先填 GitHub Pages 地址，例如 `https://halsufe.github.io`
    - `SUPABASE_URL`：Supabase Project URL
    - `SUPABASE_SERVICE_ROLE_KEY`：Supabase `service_role` key
    - `AI_API_KEY`：你的 AI 服务密钥（生产配置要求填写）
-4. 部署完成后打开 `https://longma-api.onrender.com/health`，看到 `{"status":"ok"}` 才算成功。记下 Render 服务地址。
+   - `ENV`：`prod`
+   - `STORAGE_BACKEND`：`supabase`
+   - `SUPABASE_STORAGE_BUCKET`：`longma-files`
+   - `SECRET_KEY`、`MCP_SERVICE_TOKEN`：随机长字符串
+3. 将本仓库内容同步到 Space，根目录 Dockerfile 会自动构建。
+4. 打开 `https://<用户名>-longma-shijie-api.hf.space/health`，看到 `{"status":"ok"}` 才算成功。
 
 ## 4. 部署前端到 GitHub Pages
 
 1. 在 GitHub 仓库打开 **Settings → Pages**。
 2. **Source** 选择 **GitHub Actions**。
-3. 打开 **Settings → Secrets and variables → Actions → Variables**，新建变量 `LONGMA_API_BASE_URL`，值为 Render 服务地址，例如 `https://longma-api.onrender.com`。
+3. 打开 **Settings → Secrets and variables → Actions → Variables**，新建变量 `LONGMA_API_BASE_URL`，值为 Space 后端地址。
 4. 再次推送代码，或在 **Actions → Deploy frontend to GitHub Pages → Run workflow** 手动运行。
 5. 打开 GitHub Pages 给出的地址。登录页能打开且浏览器没有 CORS 错误，说明前后端已连通。
 
@@ -56,7 +60,7 @@ git push -u origin main
 
 ## 常见问题
 
-- **CORS 错误**：把实际 Pages 地址（不带末尾 `/`）填入 Render 的 `CORS_ORIGINS`，保存并重新部署。
+- **CORS 错误**：把实际 Pages 地址（不带末尾 `/`）填入 Space 的 `CORS_ORIGINS`，保存并重新构建。
 - **数据库连接失败**：检查 Supabase 连接串密码是否已 URL 编码；Render 与 Supabase 都支持 IPv4 时优先使用 Supabase 提供的连接池 URI。
 - **文件上传失败**：确认 bucket 名为 `longma-files`，且 Render 中 `STORAGE_BACKEND=supabase`、URL 和 service role key 均已填写。
-- **Render 免费服务休眠**：首次访问可能需要几十秒唤醒，这是平台限制，不是前端故障。
+- **Spaces 免费服务休眠**：首次访问可能需要几十秒唤醒，这是平台限制，不是前端故障。
