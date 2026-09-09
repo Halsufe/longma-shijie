@@ -129,7 +129,7 @@ def get_settings() -> Settings:
         f"║    AI 适配器:      {'GenericAdapter (真实 AI)' if s.AI_API_KEY and s.AI_BASE_URL else 'MockAdapter (模拟)'}",
         "║",
         "║  [数据 & 存储]",
-        f"║    DB_URL:         {s.DB_URL}",
+        "║    DB_URL:         (configured; credentials hidden)",
         f"║    STORAGE_PATH:   {s.STORAGE_PATH}",
         f"║    FILE_RETENTION: {s.FILE_RETENTION_DAYS} 天",
         f"║    QUOTA:          {s.DEFAULT_QUOTA_MB} MB",

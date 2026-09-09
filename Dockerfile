@@ -9,8 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends libpq5 gcc libp
 WORKDIR /app
 COPY requirements.txt ./
 RUN pip install -r requirements.txt
-COPY . /app/
+COPY backend/app /app/backend/app
+COPY backend/__init__.py /app/backend/__init__.py
+COPY alembic /app/alembic
+COPY alembic.ini /app/alembic.ini
+COPY frontend /app/frontend
 RUN mkdir -p /app/backend/storage
 
 EXPOSE 7860
-CMD ["sh", "-c", "alembic upgrade head && uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 2"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn backend.app.main:app --host 0.0.0.0 --port ${PORT:-7860} --workers 1"]

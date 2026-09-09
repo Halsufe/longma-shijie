@@ -51,7 +51,7 @@ from backend.app.models.announcement import (  # noqa: F401
 config = context.config
 
 # 与应用共用同一配置源；测试仍可通过环境变量覆盖。
-config.set_main_option("sqlalchemy.url", os.getenv("DB_URL", settings.DB_URL))
+config.set_main_option("sqlalchemy.url", os.getenv("DB_URL", settings.DB_URL).replace("%", "%%"))
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
